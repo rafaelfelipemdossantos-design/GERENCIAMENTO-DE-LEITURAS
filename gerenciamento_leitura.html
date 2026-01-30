@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA DE GESTÃO | Painel Avançado v3.5 (Rankings)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            950: '#020617', 
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155'
+                        },
+                        brand: {
+                            400: '#818cf8',
+                            500: '#6366f1', 
+                            600: '#4f46e5',
+                            glow: 'rgba(99, 102, 241, 0.5)'
+                        },
+                        gold: '#fbbf24',
+                        silver: '#94a3b8',
+                        bronze: '#b45309',
+                    },
+                    animation: {
+                        'enter': 'enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        enter: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #020617;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(192, 132, 252, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(34, 211, 238, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: #e2e8f0;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .glass-sidebar {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.2);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #818cf8, #c084fc, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+        .btn-check { position: relative; overflow: hidden; }
+        
+        .animate-enter { animation: enter 0.5s ease forwards; opacity: 0; }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+
+        .input-glass {
+            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .input-glass:focus {
+            background: rgba(2, 6, 23, 0.9);
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+        
+        .medal-shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .medal-shimmer::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex overflow-hidden selection:bg-brand-500 selection:text-white">
+
+    <!-- Sidebar -->
+    <aside class="w-72 glass-sidebar hidden md:flex flex-col z-30 transition-all duration-300 relative border-r border-white/5">
+        <div class="absolute top-0 left-0 w-full h-40 bg-brand-500/10 blur-[60px] pointer-events-none"></div>
+
+        <div class="p-8 flex items-center gap-4 relative z-10">
+            <div class="w-12 h-12 bg-gradient-to-br from-brand-500 to-accent-purple rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/30 group cursor-pointer hover:scale-105 transition-transform">
+                <i class="fas fa-chart-pie text-white text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight leading-none text-white">GERENCIAMENTO<br><span class="text-brand-400 text-sm font-medium">DE LEITURA</span></h1>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-2 overflow-y-auto custom-scrollbar">
+            <div class="px-4 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Navegação</div>
+            
+            <button onclick="app.switchView('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                <i class="fas fa-home w-5 text-center transition-transform group-hover:scale-110"></i> 
+                <span class="font-medium">Visão Geral</span>
+            </button>
+            <button onclick="app.switchView('stores')" id="nav-stores" class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                <i class="fas fa-store w-5 text-center transition-transform group-hover:scale-110"></i> 
+                <span class="font-medium">Lojas e PDVs</span>
+            </button>
+
+            <!-- NOVA ABA: BOAS+PERFEITAS -->
+            <button onclick="app.switchView('best')" id="nav-best" class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all group">
+                <i class="fas fa-trophy w-5 text-center transition-transform group-hover:scale-110"></i> 
+                <span class="font-medium">Boas + Perfeitas</span>
+            </button>
+
+            <button onclick="app.switchView('delays')" id="nav-delays" class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                <div class="relative">
+                    <i class="fas fa-exclamation-triangle w-5 text-center transition-transform group-hover:scale-110 text-red-400"></i>
+                </div>
+                <span class="font-medium">Gestão de Atrasos</span>
+            </button>
+            <button onclick="app.switchView('pending')" id="nav-pending" class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                <div class="relative">
+                    <i class="fas fa-clipboard-list w-5 text-center transition-transform group-hover:scale-110"></i>
+                    <span id="badge-pending-sidebar" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                </div>
+                <span class="font-medium">Pendências</span>
+            </button>
+            <button onclick="app.switchView('team')" id="nav-team" class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                <i class="fas fa-users w-5 text-center transition-transform group-hover:scale-110"></i> 
+                <span class="font-medium">Time de Campo</span>
+            </button>
+            
+            <div class="px-4 pt-6 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dados & Segurança</div>
+            
+            <button onclick="app.downloadBackup()" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all group">
+                <i class="fas fa-download w-5 text-center"></i> 
+                <span class="font-medium">Backup (Salvar)</span>
+            </button>
+            <label class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer group">
+                <i class="fas fa-upload w-5 text-center"></i> 
+                <span class="font-medium">Restaurar Dados</span>
+                <input type="file" id="backup-input" class="hidden" accept=".json" onchange="app.uploadBackup(this)">
+            </label>
+        </nav>
+
+        <div class="p-6 mt-auto relative z-10">
+            <button onclick="app.exportExcel()" class="w-full group relative overflow-hidden rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-all duration-300 p-px shadow-lg shadow-emerald-500/20">
+                <div class="relative flex items-center justify-center gap-2 bg-dark-950/30 h-full py-3.5 rounded-xl group-hover:bg-transparent transition-colors">
+                    <i class="fas fa-file-excel text-white"></i> 
+                    <span class="font-bold text-white text-sm">Relatório Excel</span>
+                </div>
+            </button>
+            <div class="mt-4 text-center">
+                <p class="text-[10px] text-slate-600">v3.5 Rankings &bull; Gestão de Atrasos</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto relative h-screen bg-[#020617] scroll-smooth">
+        <!-- Mobile Header -->
+        <header class="md:hidden glass-panel m-4 rounded-2xl p-4 flex justify-between items-center sticky top-4 z-40">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white font-bold"><i class="fas fa-bolt"></i></div>
+                <h1 class="font-bold text-sm tracking-wide text-white">GESTOR PRO</h1>
+            </div>
+            <button onclick="document.querySelector('aside').classList.toggle('hidden'); document.querySelector('aside').classList.toggle('absolute'); document.querySelector('aside').classList.toggle('h-full');" class="text-white bg-white/10 p-2 rounded-lg"><i class="fas fa-bars"></i></button>
+        </header>
+
+        <div class="p-4 md:p-8 lg:p-12 max-w-[1920px] mx-auto space-y-10 pb-24">
+            
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section animate-enter">
+                <div class="flex flex-col xl:flex-row justify-between items-end mb-8 gap-6">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="bg-brand-500/20 text-brand-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-brand-500/20">PAINEL</span>
+                            <span class="text-slate-500 text-xs flex items-center gap-1"><i class="far fa-clock"></i> <span id="current-date"></span></span>
+                        </div>
+                        <h2 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Análise de <span class="text-gradient">Performance</span></h2>
+                    </div>
+                    
+                    <!-- KPI Global Box -->
+                    <div class="glass-panel px-8 py-5 rounded-2xl border-l-4 border-l-brand-500 flex items-center gap-8 min-w-[300px] shadow-2xl shadow-black/20">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">LEITURAS REALIZADAS</p>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-4xl font-bold text-white tracking-tighter" id="global-percentage">0</span>
+                                <span class="text-xl text-brand-500 font-medium">%</span>
+                            </div>
+                        </div>
+                        <div class="h-12 w-px bg-white/10"></div>
+                        <div class="flex-1">
+                            <div class="flex justify-between text-xs text-slate-400 mb-2">
+                                <span>Meta Mensal</span>
+                                <span id="kpi-meta-text">0/0</span>
+                            </div>
+                            <div class="w-full bg-dark-950 h-2 rounded-full overflow-hidden">
+                                <div id="kpi-progress-bar" class="bg-gradient-to-r from-brand-500 to-accent-cyan h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-panel p-6 rounded-2xl card-hover relative group overflow-hidden">
+                        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <i class="fas fa-store text-6xl text-brand-400"></i>
+                        </div>
+                        <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Base Total</p>
+                        <h3 class="text-3xl font-bold text-white mb-1" id="kpi-stores">0</h3>
+                        <p class="text-xs text-slate-500">Lojas cadastradas</p>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl card-hover relative group overflow-hidden border-b-2 border-b-emerald-500/50">
+                        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <i class="fas fa-check-circle text-6xl text-emerald-400"></i>
+                        </div>
+                        <p class="text-emerald-400/80 text-xs font-bold uppercase tracking-widest mb-2">Concluídas</p>
+                        <h3 class="text-3xl font-bold text-white mb-1" id="kpi-done">0</h3>
+                        <p class="text-xs text-slate-500">Leituras realizadas</p>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl card-hover relative group overflow-hidden border-b-2 border-b-amber-500/50">
+                        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <i class="fas fa-hourglass-half text-6xl text-amber-400"></i>
+                        </div>
+                        <p class="text-amber-400/80 text-xs font-bold uppercase tracking-widest mb-2">Pendentes</p>
+                        <h3 class="text-3xl font-bold text-white mb-1" id="kpi-pending">0</h3>
+                        <p class="text-xs text-slate-500">Aguardando visita</p>
+                    </div>
+                </div>
+
+                <!-- Charts Area: Evolution + Delays -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Evolução Temporal -->
+                    <div class="glass-panel p-6 rounded-3xl flex flex-col">
+                        <h4 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <i class="fas fa-chart-line text-brand-400"></i> Evolução de Leituras
+                        </h4>
+                        <div class="flex-1 relative min-h-[250px]">
+                            <canvas id="chartHistory"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico de Atrasos -->
+                    <div class="glass-panel p-6 rounded-3xl flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fas fa-clock text-red-400"></i> Dias Sem Leitura
+                            </h4>
+                            <button onclick="app.switchView('delays')" class="text-xs bg-red-500/10 text-red-400 px-3 py-1 rounded-full border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors">
+                                Gerenciar <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Lojas sem leituras (Top Atrasos).</p>
+                        <div class="flex-1 relative min-h-[250px]">
+                            <canvas id="chartDelays"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WIDGET: TOP 10 STARS (OURO) - Melhorado -->
+                <div class="glass-panel p-6 rounded-3xl mb-8 border border-yellow-500/30 bg-gradient-to-r from-yellow-900/10 via-dark-900 to-dark-950 relative overflow-hidden shadow-2xl shadow-yellow-500/5">
+                    <!-- Glow effect -->
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-yellow-500/10 blur-[80px] pointer-events-none"></div>
+                    
+                    <div class="flex justify-between items-start mb-6 relative z-10">
+                        <div>
+                            <h4 class="text-2xl font-bold text-white flex items-center gap-3">
+                                <span class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-600 flex items-center justify-center text-white shadow-lg shadow-yellow-500/30"><i class="fas fa-crown text-sm"></i></span>
+                                Top 10 - Lojas de Ouro
+                            </h4>
+                            <p class="text-slate-400 text-sm mt-2 ml-1">Elite do desempenho (Maiores Pontuações Globais).</p>
+                        </div>
+                        <span class="bg-yellow-500/10 text-yellow-400 text-xs font-bold px-4 py-2 rounded-xl border border-yellow-500/20 uppercase tracking-wider flex items-center gap-2 shadow-inner">
+                            <i class="fas fa-trophy"></i> Destaques
+                        </span>
+                    </div>
+                    
+                    <div class="h-80 w-full relative z-10">
+                        <canvas id="chartTopStars"></canvas>
+                    </div>
+                </div>
+
+                <!-- NOVOS WIDGETS: PRATA E REGULAR -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    
+                    <!-- WIDGET: TOP 10 PRATA (BOA) -->
+                    <div class="glass-panel p-6 rounded-3xl border border-slate-500/20 bg-gradient-to-br from-slate-900/50 to-dark-900 relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fas fa-medal text-slate-300"></i> Top 10 - Lojas de Prata
+                                </h4>
+                                <p class="text-slate-400 text-xs mt-1">Classificação: <strong>BOA</strong></p>
+                            </div>
+                        </div>
+                        <div class="h-64 w-full relative">
+                            <canvas id="chartTopSilver"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- WIDGET: TOP 15 REGULAR/RUIM (ATENÇÃO) -->
+                    <div class="glass-panel p-6 rounded-3xl border border-orange-500/20 bg-gradient-to-br from-orange-900/10 to-dark-900 relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fas fa-exclamation-circle text-orange-400"></i> Top 15 - Atenção
+                                </h4>
+                                <p class="text-slate-400 text-xs mt-1">Classificação: <strong>REGULAR / PENDENTE</strong></p>
+                            </div>
+                        </div>
+                        <div class="h-64 w-full relative">
+                            <canvas id="chartAttention"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                     <!-- Rankings -->
+                    <div class="glass-panel p-8 rounded-3xl animate-enter delay-200 lg:col-span-2">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <h4 class="text-xl font-bold text-white flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center text-yellow-400"><i class="fas fa-user-tie"></i></div>
+                                Ranking de Promotores
+                            </h4>
+                            <div class="flex p-1 bg-dark-900/50 rounded-lg border border-white/5">
+                                <button onclick="app.setRankingFilter('MENSAL')" id="rank-btn-MENSAL" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all bg-brand-600 text-white shadow-lg">MENSAL</button>
+                                <button onclick="app.setRankingFilter('QUINZENAL')" id="rank-btn-QUINZENAL" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all text-slate-500 hover:text-white">QUINZENAL</button>
+                                <button onclick="app.setRankingFilter('SEMANAL')" id="rank-btn-SEMANAL" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all text-slate-500 hover:text-white">SEMANAL</button>
+                            </div>
+                        </div>
+                        <ul id="top-promoters-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- JS -->
+                        </ul>
+                    </div>
+
+                    <!-- Classificação -->
+                    <div class="glass-panel p-6 rounded-3xl flex flex-col items-center justify-center">
+                        <h4 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-accent-purple"></i> Visão Geral
+                        </h4>
+                        <div class="h-48 w-full relative">
+                            <canvas id="chartClassification"></canvas>
+                        </div>
+                        <div class="mt-4 flex flex-wrap justify-center gap-3 text-[10px] text-slate-400 font-medium">
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Perfeita</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Boa</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-500"></span> Regular</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: BEST (VISUALIZAÇÃO BOAS+PERFEITAS COM ANÁLISE COMPARATIVA) -->
+            <div id="view-best" class="view-section hidden animate-enter">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-emerald-500/20">ELITE DE CAMPO</span>
+                        </div>
+                        <h2 class="text-3xl font-bold text-white mb-1">Lojas <span class="text-emerald-400">Boas & Perfeitas</span></h2>
+                        <p class="text-slate-400">Exibindo apenas PDVs com classificação superior.</p>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="app.exportBestExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all">
+                            <i class="fas fa-file-excel"></i> Exportar Elite
+                        </button>
+                        <input type="text" id="bestSearchInput" onkeyup="app.renderBestStores()" placeholder="Buscar na elite..." class="bg-dark-900 border border-white/10 text-slate-200 px-4 py-2 rounded-xl text-sm focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- Gráficos de Análise (Elite vs Outros) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Gráfico 1: Canais Elite -->
+                    <div class="glass-panel p-6 rounded-3xl border border-emerald-500/10 bg-emerald-500/5">
+                        <h4 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-emerald-400"></i> Distribuição Elite por Canal
+                        </h4>
+                        <div class="h-64 w-full relative">
+                            <canvas id="chartBestChannels"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico 2: Comparativo (NOVO) -->
+                    <div class="glass-panel p-6 rounded-3xl border border-blue-500/10 bg-blue-500/5">
+                        <h4 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <i class="fas fa-balance-scale text-blue-400"></i> Comparativo de Performance (Elite vs Outros)
+                        </h4>
+                        <div class="h-64 w-full relative">
+                            <canvas id="chartChannelComparison"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modo de Análise (Sumário de Insights) -->
+                <div class="glass-panel p-6 rounded-2xl mb-8 border border-white/5 bg-gradient-to-r from-dark-900 to-dark-950">
+                    <h5 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Modo de Análise: Penetração de Elite</h5>
+                    <div id="best-insights-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- JS Injected -->
+                    </div>
+                </div>
+
+                <div id="best-stores-grid" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+
+            <!-- VIEW: DELAYS -->
+            <div id="view-delays" class="view-section hidden animate-enter">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-red-500/20">ATENÇÃO</span>
+                        </div>
+                        <h2 class="text-3xl font-bold text-white mb-1">Gestão de <span class="text-red-400">Atrasos</span></h2>
+                        <p class="text-slate-400">Direcione a equipe para as lojas sem leituras.</p>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="app.exportDelaysExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all">
+                            <i class="fas fa-file-excel"></i> Exportar Relatório
+                        </button>
+                        <input type="text" id="delaySearchInput" onkeyup="app.renderDelaysTable()" placeholder="Filtrar por promotor ou loja..." class="bg-dark-900 border border-white/10 text-slate-200 px-4 py-2 rounded-xl text-sm focus:border-red-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- Gráfico Específico da Aba de Atrasos -->
+                <div class="glass-panel p-6 rounded-2xl mb-8 border border-red-500/10">
+                    <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-chart-bar text-red-400"></i> Análise de Atrasos (Top Críticos)</h4>
+                    <div class="h-64 w-full relative">
+                        <canvas id="chartDelaysDetail"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl overflow-hidden border border-red-500/20">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-white/5 bg-red-500/5">
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">PDV / Loja</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Responsáveis</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Situação</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Diagnóstico</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="delays-table-body" class="divide-y divide-white/5 text-sm">
+                                <!-- JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: STORES -->
+            <div id="view-stores" class="view-section hidden animate-enter">
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-2">Gestão de <span class="text-gradient">Lojas</span></h2>
+                        <p class="text-slate-400">Controle total dos Pontos de Venda.</p>
+                    </div>
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <button onclick="app.resetMonth()" class="px-4 py-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 border border-red-500/20 transition-all text-sm font-semibold flex items-center gap-2">
+                            <i class="fas fa-redo-alt"></i> Resetar Tudo
+                        </button>
+                        <button onclick="app.openStoreModal()" class="px-6 py-3 bg-brand-600 text-white rounded-xl hover:bg-brand-500 shadow-lg shadow-brand-500/30 transition-all text-sm font-bold flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Adicionar Loja
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Advanced Filter Bar -->
+                <div class="glass-panel p-3 rounded-2xl mb-8 flex flex-col lg:flex-row gap-4 items-center sticky top-2 z-30 shadow-2xl shadow-black/50 border border-white/10">
+                    <div class="relative flex-1 w-full">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" id="searchInput" onkeyup="app.renderStores()" placeholder="Buscar loja, cidade ou promotor..." class="w-full bg-dark-900/50 text-slate-200 pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500 border border-transparent placeholder:text-slate-600 font-medium">
+                    </div>
+                    
+                    <div class="flex gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
+                        <!-- Filtro de Status -->
+                        <select id="filter-status" onchange="app.renderStores()" class="bg-dark-900 border border-white/10 text-slate-300 text-xs font-bold rounded-xl px-3 py-3 outline-none focus:border-brand-500 cursor-pointer min-w-[140px]">
+                            <option value="all">Todos Status</option>
+                            <option value="SEM_LEITURA" class="text-red-400">🚨 Sem Leitura</option>
+                            <option value="PENDENTE">Pendentes</option>
+                            <option value="CONCLUIDO">Concluídas</option>
+                        </select>
+
+                        <!-- Filtro Frequência -->
+                        <select id="filter-freq" onchange="app.renderStores()" class="bg-dark-900 border border-white/10 text-slate-300 text-xs font-bold rounded-xl px-3 py-3 outline-none focus:border-brand-500 cursor-pointer min-w-[120px]">
+                            <option value="all">Todas Freq.</option>
+                            <option value="MENSAL">Mensal</option>
+                            <option value="QUINZENAL">Quinzenal</option>
+                            <option value="SEMANAL">Semanal</option>
+                        </select>
+
+                        <!-- Ordenação Inteligente -->
+                        <select id="sort-order" onchange="app.renderStores()" class="bg-dark-900 border border-white/10 text-brand-400 text-xs font-bold rounded-xl px-3 py-3 outline-none focus:border-brand-500 cursor-pointer min-w-[140px]">
+                            <option value="default">Padrão</option>
+                            <option value="score-asc">Pontuação (Cresc.)</option>
+                            <option value="score-desc">Pontuação (Decresc.)</option>
+                            <option value="name">Nome (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="stores-grid" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+
+            <!-- VIEW: PENDING -->
+            <div id="view-pending" class="view-section hidden animate-enter">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-2">Relatório de <span class="text-gradient">Pendências</span></h2>
+                        <p class="text-slate-400">Foco total em execução.</p>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden border border-white/5">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-white/5 bg-white/5">
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Loja</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Equipe (Titular / Apoio)</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Status</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-table-body" class="divide-y divide-white/5 text-sm">
+                                <!-- JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: TEAM -->
+            <div id="view-team" class="view-section hidden animate-enter">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-2">Time de <span class="text-gradient">Campo</span></h2>
+                        <p class="text-slate-400">Clique no promotor para ver detalhes.</p>
+                    </div>
+                    <button onclick="app.addPromoter()" class="px-5 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-500 shadow-lg font-bold flex items-center gap-2 text-sm">
+                        <i class="fas fa-user-plus"></i> Novo
+                    </button>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-white/5 bg-white/5">
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Promotor</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">Eficiência</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider">PDVs</th>
+                                    <th class="p-5 font-semibold text-xs uppercase tracking-wider text-right">Gerenciar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="promoters-table-body" class="divide-y divide-white/5 text-sm">
+                                <!-- JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Editar Loja -->
+    <div id="modal-store" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-enter">
+        <div class="glass-panel w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                    <i class="fas fa-store-alt text-brand-400"></i> Editar Loja
+                </h3>
+                <button onclick="app.closeModal('modal-store')" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="app.saveStore(event)" class="p-6 space-y-5 overflow-y-auto custom-scrollbar">
+                <input type="hidden" id="edit-store-id">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Nome do PDV</label>
+                    <input type="text" id="input-store-name" required class="input-glass w-full rounded-lg p-3 text-white placeholder:text-slate-600 outline-none">
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
+                    <div>
+                        <label class="block text-xs font-bold text-brand-300 uppercase mb-2"><i class="fas fa-user"></i> Titular</label>
+                        <select id="input-store-promoter" required class="input-glass w-full rounded-lg p-3 text-white outline-none cursor-pointer bg-dark-900">
+                            <!-- JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2"><i class="fas fa-user-friends"></i> Apoio (Opcional)</label>
+                        <select id="input-store-promoter-apoio" class="input-glass w-full rounded-lg p-3 text-white outline-none cursor-pointer bg-dark-900">
+                            <!-- JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Canal</label>
+                        <select id="input-store-canal" class="input-glass w-full rounded-lg p-3 text-white outline-none cursor-pointer bg-dark-900">
+                            <option value="NMR">NMR</option>
+                            <option value="DPP">DPP</option>
+                            <option value="C&C">C&C</option>
+                            <option value="PERF">PERF</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Frequência</label>
+                        <select id="input-store-freq" class="input-glass w-full rounded-lg p-3 text-white outline-none cursor-pointer bg-dark-900">
+                            <option value="MENSAL">Mensal (1x)</option>
+                            <option value="QUINZENAL">Quinzenal (2x)</option>
+                            <option value="SEMANAL">Semanal (4x)</option>
+                            <option value="EXTRA">Extra (Livre)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Classificação</label>
+                    <select id="input-store-classification" class="input-glass w-full rounded-lg p-3 text-white outline-none cursor-pointer bg-dark-900">
+                        <option value="PENDENTE">Pendente</option>
+                        <option value="REGULAR">Regular</option>
+                        <option value="BOA">Boa</option>
+                        <option value="PERFEITA">Perfeita</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Pontuação (0-100)</label>
+                    <div class="flex items-center gap-4">
+                        <input type="range" id="input-store-score-range" min="0" max="100" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-500" oninput="document.getElementById('input-store-score').value = this.value">
+                        <input type="number" id="input-store-score" min="0" max="100" class="input-glass w-20 rounded-lg p-2 text-center text-white font-bold outline-none" oninput="document.getElementById('input-store-score-range').value = this.value">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="app.closeModal('modal-store')" class="flex-1 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-lg shadow-brand-500/20 transition">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes Promotor -->
+    <div id="modal-promoter-details" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-enter">
+        <div class="glass-panel w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-brand-500/10">
+                <div>
+                    <h3 class="text-xl font-bold text-white" id="detail-promoter-name">Nome do Promotor</h3>
+                    <p class="text-xs text-brand-300" id="detail-promoter-stats">Resumo...</p>
+                </div>
+                <button onclick="app.closeModal('modal-promoter-details')" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-0 overflow-y-auto custom-scrollbar flex-1">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-dark-900/50 text-slate-400 sticky top-0 backdrop-blur-md">
+                        <tr>
+                            <th class="p-4 font-semibold text-xs uppercase">Loja</th>
+                            <th class="p-4 font-semibold text-xs uppercase">Papel</th>
+                            <th class="p-4 font-semibold text-xs uppercase">Status</th>
+                            <th class="p-4 font-semibold text-xs uppercase text-right">Progresso</th>
+                            <th class="p-4 font-semibold text-xs uppercase text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detail-promoter-list" class="divide-y divide-white/5">
+                        <!-- JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            data: { stores: [], promoters: [] },
+            filters: { freq: 'all', classification: 'all', search: '', sort: 'default', status: 'all' },
+            rankingFreq: 'MENSAL',
+            charts: {},
+
+            init() {
+                document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+                const saved = localStorage.getItem('merch_v5_real');
+                if (saved) {
+                    try {
+                        this.data = JSON.parse(saved);
+                        this.migrateData();
+                    } catch(e) {
+                        console.error("Erro ao carregar dados", e);
+                        Swal.fire('Erro', 'Dados corrompidos detectados.', 'error');
+                    }
+                } else {
+                    this.loadDemoData();
+                }
+
+                this.updateUI();
+            },
+
+            migrateData() {
+                if (!this.data.stores) this.data.stores = [];
+                this.data.stores.forEach(s => {
+                    if (!s.classification) s.classification = 'PENDENTE';
+                    if (!s.canal) s.canal = 'NMR'; // Migração de canal
+                    if (s.score === undefined) s.score = 0;
+                    if (s.promoter_support === undefined) s.promoter_support = '';
+                    
+                    s.checks = s.checks.map(c => {
+                        if (typeof c === 'boolean') {
+                            return { done: c, date: c ? new Date().toLocaleDateString('pt-BR') : null };
+                        }
+                        return c;
+                    });
+                });
+                this.save();
+            },
+
+            loadDemoData() {
+                this.data.promoters = ["ALEXANDRE", "MARIA", "JOAO"];
+                this.data.stores = [
+                    { id: 1, name: "LOJA EXEMPLO 1", promoter: "ALEXANDRE", promoter_support: "MARIA", freq: "MENSAL", canal: "NMR", checks: [{done:false, date:null}], classification: "PENDENTE", score: 0 }
+                ];
+            },
+
+            save() {
+                localStorage.setItem('merch_v5_real', JSON.stringify(this.data));
+                this.updateDashboard(); 
+            },
+
+            switchView(viewName) {
+                document.querySelectorAll('.view-section').forEach(el => {
+                    el.classList.add('hidden');
+                    el.classList.remove('animate-enter');
+                });
+                const view = document.getElementById(`view-${viewName}`);
+                view.classList.remove('hidden');
+                void view.offsetWidth; 
+                view.classList.add('animate-enter');
+
+                document.querySelectorAll('.nav-item').forEach(btn => {
+                    btn.classList.remove('bg-brand-500/10', 'text-brand-400', 'border-brand-500/20');
+                    btn.classList.add('text-slate-400', 'border-transparent');
+                });
+                const active = document.getElementById(`nav-${viewName}`);
+                if(active) active.classList.add('bg-brand-500/10', 'text-brand-400', 'border-brand-500/20');
+                
+                if (viewName === 'stores') this.renderStores();
+                if (viewName === 'best') this.renderBestStores();
+                if (viewName === 'delays') {
+                    this.renderDelaysTable();
+                    this.renderDelaysDetailChart(); 
+                }
+            },
+
+            updateUI() {
+                this.renderStoreOptions();
+                this.renderStores();
+                this.renderBestStores();
+                this.renderPending();
+                this.renderPromoters();
+                this.updateDashboard();
+            },
+
+            renderStoreOptions() {
+                const list = this.data.promoters.sort().map(p => `<option value="${p}">${p}</option>`).join('');
+                document.getElementById('input-store-promoter').innerHTML = '<option value="">Selecione o Titular...</option>' + list;
+                document.getElementById('input-store-promoter-apoio').innerHTML = '<option value="">Nenhum (Opcional)</option>' + list;
+            },
+
+            renderDelaysTable() {
+                const search = document.getElementById('delaySearchInput').value.toLowerCase();
+                const tbody = document.getElementById('delays-table-body');
+                const today = new Date();
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); 
+
+                const delays = this.data.stores.map(s => {
+                    let lastDate = null;
+                    s.checks.forEach(c => {
+                        if(c.done && c.date) {
+                            const d = this.parseDate(c.date);
+                            if(!lastDate || d > lastDate) lastDate = d;
+                        }
+                    });
+
+                    let daysDiff = 0;
+                    if(lastDate) {
+                        const diffTime = Math.abs(today - lastDate);
+                        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    } else {
+                        const diffTime = Math.abs(today - startOfMonth);
+                        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                    
+                    const doneCount = s.checks.filter(c => c.done).length;
+                    if(doneCount === s.checks.length) daysDiff = 0; 
+
+                    return { 
+                        ...s,
+                        days: daysDiff,
+                        lastDateFormatted: lastDate ? lastDate.toLocaleDateString('pt-BR') : 'Nunca visitada'
+                    };
+                })
+                .filter(item => item.days > 0 && (item.name.toLowerCase().includes(search) || item.promoter.toLowerCase().includes(search)))
+                .sort((a,b) => b.days - a.days);
+
+                if (delays.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500">Nenhum atraso encontrado ou sem correspondência.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = delays.map(d => {
+                    const isCritical = d.days > 15;
+                    const isWarning = d.days > 7;
+                    let badgeClass = 'bg-slate-800 text-slate-400';
+                    let icon = '';
+
+                    if (isCritical) {
+                        badgeClass = 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse';
+                        icon = '<i class="fas fa-exclamation-triangle mr-1"></i>';
+                    } else if (isWarning) {
+                        badgeClass = 'bg-orange-500/20 text-orange-400 border border-orange-500/30';
+                        icon = '<i class="fas fa-clock mr-1"></i>';
+                    }
+
+                    return `
+                    <tr class="hover:bg-white/5 transition-colors group">
+                        <td class="p-5">
+                            <div class="font-bold text-white text-sm">${d.name}</div>
+                            <div class="flex gap-2 mt-1">
+                                <span class="text-[9px] px-1.5 py-0.5 rounded border border-white/10 bg-dark-900 text-slate-400">${d.freq}</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded border border-white/10 bg-dark-900 text-slate-400 flex items-center gap-1"><i class="fas fa-star text-yellow-500"></i> ${d.score}</span>
+                            </div>
+                        </td>
+                        <td class="p-5">
+                            <div class="flex flex-col gap-1">
+                                <div class="text-xs font-bold text-slate-200 flex items-center gap-2">
+                                    <div class="w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center text-[9px] text-white">${d.promoter.charAt(0)}</div>
+                                    ${d.promoter}
+                                </div>
+                                ${d.promoter_support ? `
+                                <div class="text-xs text-slate-400 flex items-center gap-2">
+                                    <div class="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-[9px] text-white">${d.promoter_support.charAt(0)}</div>
+                                    ${d.promoter_support} <span class="text-[9px] opacity-50">(Apoio)</span>
+                                </div>` : ''}
+                            </div>
+                        </td>
+                        <td class="p-5">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${badgeClass}">
+                                ${icon} ${d.days} dias sem leitura
+                            </span>
+                        </td>
+                        <td class="p-5 text-xs text-slate-400">
+                            Última Leitura: <span class="text-white font-mono">${d.lastDateFormatted}</span>
+                        </td>
+                        <td class="p-5 text-right">
+                            <button onclick="app.copyCobrarMsg('${d.promoter}', '${d.name}', ${d.days})" class="bg-emerald-500/10 hover:bg-emerald-500 hover:text-white text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ml-auto">
+                                <i class="fab fa-whatsapp"></i> Cobrar
+                            </button>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+            },
+
+            renderDelaysDetailChart() {
+                const ctx = document.getElementById('chartDelaysDetail').getContext('2d');
+                if(this.charts.delaysDetail) this.charts.delaysDetail.destroy();
+
+                const today = new Date();
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); 
+
+                const delaysData = this.data.stores.map(s => {
+                    let lastDate = null;
+                    s.checks.forEach(c => {
+                        if(c.done && c.date) {
+                            const d = this.parseDate(c.date);
+                            if(!lastDate || d > lastDate) lastDate = d;
+                        }
+                    });
+                    let daysDiff = 0;
+                    if(lastDate) {
+                        const diffTime = Math.abs(today - lastDate);
+                        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    } else {
+                        const diffTime = Math.abs(today - startOfMonth);
+                        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                    const doneCount = s.checks.filter(c => c.done).length;
+                    if(doneCount === s.checks.length) daysDiff = 0; 
+                    return { name: s.name, days: daysDiff };
+                }).filter(d => d.days > 0).sort((a,b) => b.days - a.days).slice(0, 15); // Top 15
+
+                this.charts.delaysDetail = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: delaysData.map(d => d.name.substring(0,20)+'...'),
+                        datasets: [{
+                            label: 'Dias sem Leitura',
+                            data: delaysData.map(d => d.days),
+                            backgroundColor: delaysData.map(d => d.days > 15 ? '#ef4444' : '#f97316'),
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: {display:false} },
+                        scales: {
+                            x: { grid: {display:false}, ticks: {color: '#94a3b8', font:{size:10}} },
+                            y: { grid: {color:'rgba(255,255,255,0.05)'}, ticks: {color:'#94a3b8'} }
+                        }
+                    }
+                });
+            },
+
+            exportDelaysExcel() {
+                const today = new Date();
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); 
+
+                const data = this.data.stores.map(s => {
+                    let lastDate = null;
+                    s.checks.forEach(c => {
+                        if(c.done && c.date) {
+                            const d = this.parseDate(c.date);
+                            if(!lastDate || d > lastDate) lastDate = d;
+                        }
+                    });
+                    let daysDiff = 0;
+                    if(lastDate) {
+                        const diffTime = Math.abs(today - lastDate);
+                        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    } else {
+                        const diffTime = Math.abs(today - startOfMonth);
+                        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                    const doneCount = s.checks.filter(c => c.done).length;
+                    if(doneCount === s.checks.length) daysDiff = 0; 
+
+                    return { ...s, days: daysDiff, last: lastDate ? lastDate.toLocaleDateString('pt-BR') : '-' };
+                })
+                .filter(d => d.days > 0)
+                .sort((a,b) => b.days - a.days)
+                .map(s => ({
+                    "Loja": s.name,
+                    "Promotor": s.promoter,
+                    "Apoio": s.promoter_support || '-',
+                    "Dias Sem Leitura": s.days,
+                    "Última Leitura": s.last,
+                    "Prioridade": s.days > 15 ? "CRÍTICA" : "ALTA"
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Relatorio_Atrasos");
+                XLSX.writeFile(wb, "Relatorio_Atrasos_Leitura.xlsx");
+            },
+
+            copyCobrarMsg(promoter, store, days) {
+                const msg = `Olá ${promoter.split(' ')[0]}, verificamos que a loja *${store}* está há *${days} dias* sem leitura registrada no sistema. Por favor, priorizar essa visita. Obrigado!`;
+                navigator.clipboard.writeText(msg).then(() => {
+                    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, background: '#1e293b', color: '#fff' });
+                    Toast.fire({ icon: 'success', title: 'Mensagem copiada!', text: 'Cole no WhatsApp.' });
+                });
+            },
+
+            // FUNÇÃO PARA RENDERIZAR LOJAS ELITE (BOAS+PERFEITAS)
+            renderBestStores() {
+                const grid = document.getElementById('best-stores-grid');
+                if(!grid) return;
+                grid.innerHTML = '';
+                
+                const search = document.getElementById('bestSearchInput')?.value.toLowerCase() || '';
+
+                let filtered = this.data.stores.filter(s => {
+                    const isBest = s.classification === 'BOA' || s.classification === 'PERFEITA';
+                    const matchSearch = s.name.toLowerCase().includes(search) || 
+                                        s.promoter.toLowerCase().includes(search);
+                    return isBest && matchSearch;
+                });
+
+                filtered.sort((a,b) => (b.score||0) - (a.score||0));
+
+                // Lógica dos Gráficos da Aba Elite
+                this.renderBestChannelsChart(filtered);
+                this.renderChannelComparisonChart(); // Novo gráfico de comparação
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-500 bg-white/5 rounded-3xl border border-dashed border-white/10">Nenhuma loja de elite encontrada. Continue o bom trabalho!</div>`;
+                    return;
+                }
+
+                filtered.forEach(store => {
+                    const doneCount = store.checks.filter(c => c.done).length;
+                    const totalCount = store.checks.length;
+                    const percent = Math.round((doneCount / totalCount) * 100);
+                    
+                    const statusColors = {
+                        'BOA': 'bg-blue-500/20 text-blue-400 border border-blue-500/20',
+                        'PERFEITA': 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'
+                    };
+
+                    const card = document.createElement('div');
+                    const isPerfect = store.classification === 'PERFEITA';
+                    const borderGlow = isPerfect ? 'border-emerald-500/40 shadow-emerald-500/10' : 'border-blue-500/40 shadow-blue-500/10';
+
+                    card.className = `glass-panel p-6 rounded-3xl flex flex-col justify-between group relative overflow-hidden transition-all border-2 ${borderGlow} hover:scale-[1.02]`;
+
+                    card.innerHTML = `
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-gradient-to-br ${isPerfect ? 'from-emerald-500/20' : 'from-blue-500/20'} to-transparent blur-2xl opacity-50"></div>
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex flex-col gap-1">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${statusColors[store.classification]}">
+                                        <i class="fas ${isPerfect ? 'fa-crown' : 'fa-star'} mr-1"></i> ${store.classification}
+                                    </span>
+                                    <span class="text-[9px] font-bold text-slate-500 uppercase ml-1 tracking-widest">${store.canal || 'NMR'}</span>
+                                </div>
+                                <div class="text-xl font-black text-white/90">
+                                    ${store.score} <span class="text-xs text-slate-500 uppercase">pts</span>
+                                </div>
+                            </div>
+                            <h3 class="text-white font-bold text-xl leading-tight mb-2 truncate">${store.name}</h3>
+                            <div class="flex items-center gap-3 text-sm text-slate-400 mb-4">
+                                <div class="w-8 h-8 rounded-full bg-dark-950 flex items-center justify-center text-brand-400 border border-white/5">
+                                    <i class="fas fa-user-tie text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-bold text-slate-500 leading-none mb-1">Responsável</p>
+                                    <p class="text-white font-medium">${store.promoter}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-end">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Execução Mensal</span>
+                                <span class="text-xs font-bold text-white">${percent}%</span>
+                            </div>
+                            <div class="w-full h-2 bg-dark-950 rounded-full overflow-hidden p-0.5 border border-white/5">
+                                <div class="h-full rounded-full transition-all duration-1000 ${isPerfect ? 'bg-emerald-500' : 'bg-blue-500'}" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            },
+
+            renderBestChannelsChart(bestStores) {
+                const ctx = document.getElementById('chartBestChannels').getContext('2d');
+                if(this.charts.bestChannels) this.charts.bestChannels.destroy();
+
+                const channelCounts = { 'NMR': 0, 'DPP': 0, 'C&C': 0, 'PERF': 0 };
+                bestStores.forEach(s => {
+                    if(channelCounts[s.canal] !== undefined) channelCounts[s.canal]++;
+                });
+
+                this.charts.bestChannels = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(channelCounts),
+                        datasets: [{
+                            label: 'Lojas Elite',
+                            data: Object.values(channelCounts),
+                            backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#10b981'],
+                            borderRadius: 8,
+                            barThickness: 40
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#fff',
+                                anchor: 'end',
+                                align: 'top',
+                                font: { weight: 'bold' }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', stepSize: 1 } }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            },
+
+            // NOVO GRÁFICO: COMPARATIVO DE PERFORMANCE POR CANAL
+            renderChannelComparisonChart() {
+                const ctx = document.getElementById('chartChannelComparison').getContext('2d');
+                if(this.charts.channelComparison) this.charts.channelComparison.destroy();
+
+                const channels = ['NMR', 'DPP', 'C&C', 'PERF'];
+                const eliteData = [];
+                const otherData = [];
+                const insights = [];
+
+                channels.forEach(ch => {
+                    const totalChannel = this.data.stores.filter(s => s.canal === ch).length;
+                    const eliteChannel = this.data.stores.filter(s => s.canal === ch && (s.classification === 'BOA' || s.classification === 'PERFEITA')).length;
+                    const others = totalChannel - eliteChannel;
+                    
+                    eliteData.push(eliteChannel);
+                    otherData.push(others);
+
+                    const percent = totalChannel > 0 ? Math.round((eliteChannel / totalChannel) * 100) : 0;
+                    insights.push({ ch, percent, totalChannel, eliteChannel });
+                });
+
+                this.charts.channelComparison = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: channels,
+                        datasets: [
+                            {
+                                label: 'Elite (Boas/Perf)',
+                                data: eliteData,
+                                backgroundColor: '#10b981',
+                                borderRadius: 6
+                            },
+                            {
+                                label: 'Outras (Reg/Pend)',
+                                data: otherData,
+                                backgroundColor: '#334155',
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } },
+                            datalabels: {
+                                color: '#fff',
+                                anchor: 'center',
+                                align: 'center',
+                                font: { size: 9, weight: 'bold' },
+                                formatter: (val) => val > 0 ? val : ''
+                            }
+                        },
+                        scales: {
+                            x: { stacked: false, grid: { display: false }, ticks: { color: '#94a3b8' } },
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+
+                // Renderiza Painel de Insights abaixo do gráfico
+                const insightsGrid = document.getElementById('best-insights-grid');
+                if (insightsGrid) {
+                    insightsGrid.innerHTML = insights.map(item => `
+                        <div class="bg-white/5 p-4 rounded-xl border border-white/5 flex flex-col justify-center items-center text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase mb-1">${item.ch}</span>
+                            <div class="text-xl font-bold text-white">${item.percent}% <span class="text-[10px] text-emerald-400">Elite</span></div>
+                            <div class="text-[9px] text-slate-400 mt-1">${item.eliteChannel} de ${item.totalChannel} PDVs</div>
+                        </div>
+                    `).join('');
+                }
+            },
+
+            exportBestExcel() {
+                const data = this.data.stores
+                    .filter(s => s.classification === 'BOA' || s.classification === 'PERFEITA')
+                    .map(s => ({
+                        "PDV": s.name,
+                        "Canal": s.canal || 'NMR',
+                        "Classificação": s.classification,
+                        "Pontuação": s.score,
+                        "Promotor": s.promoter,
+                        "Frequência": s.freq,
+                        "Eficiência": `${Math.round((s.checks.filter(c => c.done).length / s.checks.length) * 100)}%`
+                    }));
+
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Elite_Lojas");
+                XLSX.writeFile(wb, "Lojas_Elite_Boas_Perfeitas.xlsx");
+            },
+
+            renderStores() {
+                const grid = document.getElementById('stores-grid');
+                grid.innerHTML = '';
+                
+                this.filters.search = document.getElementById('searchInput').value.toLowerCase();
+                this.filters.freq = document.getElementById('filter-freq').value;
+                this.filters.status = document.getElementById('filter-status').value;
+                this.filters.sort = document.getElementById('sort-order').value;
+
+                let filtered = this.data.stores.filter(s => {
+                    const search = this.filters.search;
+                    const matchSearch = s.name.toLowerCase().includes(search) || 
+                                        s.promoter.toLowerCase().includes(search) || 
+                                        (s.promoter_support && s.promoter_support.toLowerCase().includes(search));
+                                        
+                    const matchFreq = this.filters.freq === 'all' || s.freq === this.filters.freq;
+                    
+                    const doneCount = s.checks.filter(c => c.done).length;
+                    const total = s.checks.length;
+                    
+                    let matchStatus = true;
+                    if(this.filters.status === 'SEM_LEITURA') matchStatus = doneCount === 0;
+                    if(this.filters.status === 'PENDENTE') matchStatus = doneCount < total;
+                    if(this.filters.status === 'CONCLUIDO') matchStatus = doneCount === total;
+
+                    return matchSearch && matchFreq && matchStatus;
+                });
+
+                if (this.filters.sort === 'score-asc') filtered.sort((a,b) => (a.score||0) - (b.score||0));
+                if (this.filters.sort === 'score-desc') filtered.sort((a,b) => (b.score||0) - (a.score||0));
+                if (this.filters.sort === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name));
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-500 bg-white/5 rounded-3xl border border-dashed border-white/10">Nenhuma loja encontrada com esses filtros.</div>`;
+                    return;
+                }
+
+                filtered.forEach(store => {
+                    const doneCount = store.checks.filter(c => c.done).length;
+                    const totalCount = store.checks.length;
+                    const percent = Math.round((doneCount / totalCount) * 100);
+                    const isPerfect = percent === 100;
+                    const hasZeroReads = doneCount === 0;
+                    
+                    const statusColors = {
+                        'PENDENTE': 'bg-slate-700 text-slate-300',
+                        'REGULAR': 'bg-orange-500/20 text-orange-400 border border-orange-500/20',
+                        'BOA': 'bg-blue-500/20 text-blue-400 border border-blue-500/20',
+                        'PERFEITA': 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'
+                    };
+
+                    let checksHTML = '<div class="flex gap-2 mt-4">';
+                    store.checks.forEach((check, idx) => {
+                        const dateLabel = check.done && check.date ? `<div class="text-[9px] mt-1 text-slate-500 font-mono">${check.date.substring(0,5)}</div>` : '';
+                        checksHTML += `
+                            <div class="flex flex-col items-center">
+                                <button onclick="app.toggleCheck(${store.id}, ${idx})" 
+                                    class="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 border ${check.done ? 'bg-brand-500 border-brand-400 text-white shadow-lg shadow-brand-500/30' : 'bg-dark-950 border-white/10 text-slate-600 hover:border-brand-500 hover:text-brand-400'}">
+                                    <i class="fas fa-check text-sm ${check.done ? 'scale-100' : 'scale-0 opacity-0'} transition-transform"></i>
+                                </button>
+                                ${dateLabel}
+                            </div>
+                        `;
+                    });
+                    checksHTML += '</div>';
+
+                    let teamHTML = `<div class="flex flex-col gap-1 mb-3">
+                        <div class="text-xs text-slate-300 flex items-center gap-2"><i class="fas fa-user text-brand-400 w-4"></i> ${store.promoter}</div>`;
+                    if(store.promoter_support) {
+                        teamHTML += `<div class="text-xs text-slate-400 flex items-center gap-2"><i class="fas fa-handshake text-slate-500 w-4"></i> ${store.promoter_support} <span class="text-[9px] uppercase border border-slate-700 px-1 rounded">Apoio</span></div>`;
+                    }
+                    teamHTML += `</div>`;
+
+                    const card = document.createElement('div');
+                    let borderClass = 'hover:border-brand-500/30';
+                    if (hasZeroReads) borderClass = 'border-l-4 border-l-red-500';
+                    else if (store.freq === 'SEMANAL' && percent < 50) borderClass = 'border-l-4 border-l-orange-500';
+
+                    card.className = `glass-panel p-5 rounded-2xl flex flex-col justify-between group relative overflow-hidden transition-all ${borderClass}`;
+
+                    card.innerHTML = `
+                        <div class="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            <button onclick="app.editStore(${store.id})" class="w-8 h-8 rounded-lg bg-dark-800 text-white hover:bg-brand-600 shadow-lg flex items-center justify-center"><i class="fas fa-pen text-xs"></i></button>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex gap-2 items-center">
+                                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-dark-950 border border-white/10 text-slate-400">${store.freq}</span>
+                                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${statusColors[store.classification]}">${store.classification}</span>
+                                    </div>
+                                    <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest ml-1">${store.canal || 'NMR'}</span>
+                                </div>
+                                <div class="flex items-center gap-1 text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-lg">
+                                    <i class="fas fa-star"></i> ${store.score}
+                                </div>
+                            </div>
+                            <h3 class="text-white font-bold text-lg leading-tight mb-3 truncate" title="${store.name}">${store.name}</h3>
+                            ${teamHTML}
+                            ${checksHTML}
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-white/5">
+                            <div class="w-full h-1.5 bg-dark-950 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-700 ${isPerfect ? 'bg-emerald-500' : hasZeroReads ? 'bg-red-500' : 'bg-brand-500'}" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            },
+
+            toggleCheck(id, idx) {
+                const store = this.data.stores.find(s => s.id === id);
+                if (!store) return;
+                const check = store.checks[idx];
+
+                if (!check.done) {
+                    check.done = true;
+                    check.date = new Date().toLocaleDateString('pt-BR');
+                    this.save();
+                    this.updateUI(); 
+                } else {
+                    Swal.fire({
+                        title: 'Gerenciar Leitura',
+                        text: `Feito em: ${check.date}`,
+                        icon: 'info',
+                        showDenyButton: true,
+                        showCancelButton: true,
+                        confirmButtonText: 'Alterar Data',
+                        denyButtonText: 'Desfazer',
+                        confirmButtonColor: '#6366f1',
+                        denyButtonColor: '#ef4444',
+                        background: '#1e293b', color: '#fff'
+                    }).then(res => {
+                        if (res.isDenied) {
+                            check.done = false;
+                            check.date = null;
+                        } else if (res.isConfirmed) {
+                            this.editDate(store, idx);
+                            return; 
+                        }
+                        this.save();
+                        this.updateUI();
+                    });
+                }
+            },
+
+            async editDate(store, idx) {
+                const { value: date } = await Swal.fire({
+                    title: 'Nova Data',
+                    input: 'text',
+                    inputValue: store.checks[idx].date,
+                    inputPlaceholder: 'DD/MM/AAAA',
+                    background: '#1e293b', color: '#fff',
+                    confirmButtonColor: '#6366f1'
+                });
+                if (date) {
+                    store.checks[idx].date = date;
+                    this.save();
+                    this.updateUI();
+                }
+            },
+
+            updateDashboard() {
+                let totalS = this.data.stores.length;
+                let totalChecks = 0, doneChecks = 0;
+                this.data.stores.forEach(s => {
+                    totalChecks += s.checks.length;
+                    doneChecks += s.checks.filter(c => c.done).length;
+                });
+                
+                const globalPct = totalChecks > 0 ? Math.round((doneChecks / totalChecks) * 100) : 0;
+                
+                document.getElementById('kpi-stores').innerText = totalS;
+                document.getElementById('kpi-done').innerText = doneChecks;
+                document.getElementById('kpi-pending').innerText = totalChecks - doneChecks;
+                document.getElementById('global-percentage').innerText = globalPct;
+                document.getElementById('kpi-progress-bar').style.width = `${globalPct}%`;
+                document.getElementById('kpi-meta-text').innerText = `${doneChecks}/${totalChecks}`;
+
+                this.renderClassificationChart();
+                this.renderHistoryChart(); 
+                this.renderDelaysChart(); 
+                this.renderTopPromoters();
+                this.renderTopStarsChart(); 
+                this.renderTopSilverChart(); 
+                this.renderAttentionChart(); 
+            },
+
+            parseDate(str) {
+                if(!str) return null;
+                const [d, m, y] = str.split('/');
+                return new Date(y, m-1, d);
+            },
+
+            renderDelaysChart() {
+                const today = new Date();
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); 
+
+                const delays = this.data.stores.map(s => {
+                    let lastDate = null;
+                    s.checks.forEach(c => {
+                        if(c.done && c.date) {
+                            const d = this.parseDate(c.date);
+                            if(!lastDate || d > lastDate) lastDate = d;
+                        }
+                    });
+
+                    let daysDiff = 0;
+                    if(lastDate) {
+                        const diffTime = Math.abs(today - lastDate);
+                        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    } else {
+                        const diffTime = Math.abs(today - startOfMonth);
+                        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                    
+                    const doneCount = s.checks.filter(c => c.done).length;
+                    if(doneCount === s.checks.length) daysDiff = 0; 
+
+                    return { name: s.name, days: daysDiff };
+                })
+                .filter(item => item.days > 0) 
+                .sort((a,b) => b.days - a.days) 
+                .slice(0, 7); 
+
+                const ctx = document.getElementById('chartDelays').getContext('2d');
+                if (this.charts.delays) this.charts.delays.destroy();
+
+                this.charts.delays = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: delays.map(d => d.name.substring(0, 15) + '...'), 
+                        datasets: [{
+                            label: 'Dias sem leitura',
+                            data: delays.map(d => d.days),
+                            backgroundColor: '#ef4444',
+                            borderRadius: 6,
+                            barThickness: 20
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y', 
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#fff',
+                                anchor: 'end',
+                                align: 'end',
+                                formatter: (val) => val + ' dias',
+                                font: { weight: 'bold', size: 10 }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                            y: { grid: { display: false }, ticks: { color: '#e2e8f0', font: { size: 10 } } }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            },
+
+            renderTopStarsChart() {
+                const topStores = [...this.data.stores]
+                    .sort((a,b) => (b.score||0) - (a.score||0))
+                    .slice(0, 10);
+                
+                const ctx = document.getElementById('chartTopStars').getContext('2d');
+                if (this.charts.topStars) this.charts.topStars.destroy();
+
+                this.charts.topStars = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: topStores.map(s => s.name.substring(0,25) + (s.name.length>25 ? '...' : '')),
+                        datasets: [{
+                            label: 'Pontuação (Estrelas)',
+                            data: topStores.map(s => s.score || 0),
+                            backgroundColor: '#fbbf24', 
+                            borderRadius: 8,
+                            barThickness: 35, 
+                            borderWidth: 1,
+                            borderColor: '#f59e0b'
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#000', 
+                                anchor: 'end',
+                                align: 'start', 
+                                offset: 10,
+                                formatter: (val) => val + ' ★',
+                                font: { weight: 'bold', size: 12 }
+                            }
+                        },
+                        scales: {
+                            x: { 
+                                max: 100, 
+                                grid: { display: false }, 
+                                ticks: { display: false } 
+                            },
+                            y: { 
+                                grid: { display: false }, 
+                                ticks: { color: '#fff', font: { size: 12, weight: '600' } } 
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            },
+
+            renderTopSilverChart() {
+                const silverStores = this.data.stores
+                    .filter(s => s.classification === 'BOA')
+                    .sort((a,b) => (b.score||0) - (a.score||0))
+                    .slice(0, 10);
+                
+                const ctx = document.getElementById('chartTopSilver').getContext('2d');
+                if (this.charts.topSilver) this.charts.topSilver.destroy();
+
+                this.charts.topSilver = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: silverStores.map(s => s.name.substring(0,18) + (s.name.length>18 ? '...' : '')),
+                        datasets: [{
+                            data: silverStores.map(s => s.score || 0),
+                            backgroundColor: '#94a3b8', 
+                            borderRadius: 6,
+                            barThickness: 20
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#fff',
+                                anchor: 'end',
+                                align: 'end',
+                                font: { size: 10, weight: 'bold' }
+                            }
+                        },
+                        scales: {
+                            x: { max: 100, grid: { display: false }, ticks: { display: false } },
+                            y: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10 } } }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            },
+
+            renderAttentionChart() {
+                const attentionStores = this.data.stores
+                    .filter(s => s.classification === 'REGULAR' || s.classification === 'PENDENTE')
+                    .sort((a,b) => (b.score||0) - (a.score||0)) 
+                    .slice(0, 15);
+                
+                const ctx = document.getElementById('chartAttention').getContext('2d');
+                if (this.charts.attention) this.charts.attention.destroy();
+
+                this.charts.attention = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: attentionStores.map(s => s.name.substring(0,18) + (s.name.length>18 ? '...' : '')),
+                        datasets: [{
+                            data: attentionStores.map(s => s.score || 0),
+                            backgroundColor: '#f97316', 
+                            borderRadius: 6,
+                            barThickness: 15
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#fff',
+                                anchor: 'end',
+                                align: 'end',
+                                font: { size: 10 }
+                            }
+                        },
+                        scales: {
+                            x: { max: 100, grid: { display: false }, ticks: { display: false } },
+                            y: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10 } } }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+            },
+
+            renderHistoryChart() {
+                const dateMap = {};
+                this.data.stores.forEach(s => {
+                    s.checks.forEach(c => {
+                        if(c.done && c.date) {
+                            const parts = c.date.split('/');
+                            if(parts.length === 3) {
+                                const key = `${parts[2]}-${parts[1]}-${parts[0]}`; 
+                                dateMap[key] = (dateMap[key] || 0) + 1;
+                            }
+                        }
+                    });
+                });
+                const sortedKeys = Object.keys(dateMap).sort();
+                const labels = sortedKeys.map(k => {
+                    const [y, m, d] = k.split('-');
+                    return `${d}/${m}`;
+                });
+                const values = sortedKeys.map(k => dateMap[k]);
+
+                const ctx = document.getElementById('chartHistory').getContext('2d');
+                if (this.charts.history) this.charts.history.destroy();
+
+                this.charts.history = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Leituras Diárias',
+                            data: values,
+                            borderColor: '#818cf8',
+                            backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#6366f1',
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
+            },
+
+            renderClassificationChart() {
+                const counts = { 'PERFEITA': 0, 'BOA': 0, 'REGULAR': 0, 'PENDENTE': 0 };
+                this.data.stores.forEach(s => {
+                    const cls = s.classification || 'PENDENTE';
+                    if (counts[cls] !== undefined) counts[cls]++;
+                });
+
+                const ctx = document.getElementById('chartClassification').getContext('2d');
+                if (this.charts.classification) this.charts.classification.destroy();
+
+                this.charts.classification = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(counts),
+                        datasets: [{
+                            data: Object.values(counts),
+                            backgroundColor: ['#10b981', '#3b82f6', '#f97316', '#334155'],
+                            borderWidth: 0,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        cutout: '75%'
+                    }
+                });
+            },
+
+            setRankingFilter(freq) {
+                this.rankingFreq = freq;
+                ['MENSAL','QUINZENAL','SEMANAL'].forEach(f => {
+                    const btn = document.getElementById(`rank-btn-${f}`);
+                    if(f === freq) {
+                        btn.className = 'px-4 py-1.5 rounded-md text-xs font-bold transition-all bg-brand-600 text-white shadow-lg';
+                    } else {
+                        btn.className = 'px-4 py-1.5 rounded-md text-xs font-bold transition-all text-slate-500 hover:text-white';
+                    }
+                });
+                this.renderTopPromoters();
+            },
+
+            renderTopPromoters() {
+                const list = document.getElementById('top-promoters-list');
+                const stats = this.data.promoters.map(p => {
+                    const stores = this.data.stores.filter(s => s.promoter === p && s.freq === this.rankingFreq);
+                    let total = 0, done = 0;
+                    stores.forEach(s => { total += s.checks.length; done += s.checks.filter(c => c.done).length; });
+                    return { name: p, pct: total > 0 ? (done/total)*100 : 0, count: stores.length };
+                }).filter(x => x.count > 0).sort((a,b) => b.pct - a.pct).slice(0, 10); 
+
+                if(stats.length === 0) {
+                    list.innerHTML = `<li class="col-span-full text-center text-slate-500 text-sm py-4">Sem dados para ${this.rankingFreq}</li>`;
+                    return;
+                }
+
+                list.innerHTML = stats.map((p, idx) => {
+                    let rankIcon = `<div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-400 shadow-inner border border-white/5">${idx + 1}º</div>`;
+                    let cardClass = 'glass-panel p-4 rounded-xl flex items-center gap-4 relative overflow-hidden group hover:border-brand-500/30 transition-all';
+                    
+                    if (idx === 0) { // Gold
+                        rankIcon = `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-yellow-500/30 ring-2 ring-yellow-400/50"><i class="fas fa-medal"></i></div>`;
+                        cardClass += ' border border-yellow-500/30 bg-yellow-500/5 medal-shimmer';
+                    } else if (idx === 1) { // Silver
+                        rankIcon = `<div class="w-9 h-9 rounded-full bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center font-bold text-md text-white shadow-lg shadow-slate-500/30 ring-2 ring-slate-400/50"><i class="fas fa-medal"></i></div>`;
+                        cardClass += ' border border-yellow-500/30';
+                    } else if (idx === 2) { // Bronze
+                        rankIcon = `<div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-300 to-orange-700 flex items-center justify-center font-bold text-md text-white shadow-lg shadow-orange-500/30 ring-2 ring-orange-400/50"><i class="fas fa-medal"></i></div>`;
+                        cardClass += ' border border-yellow-500/30';
+                    } else { // Top 10 Star
+                         rankIcon = `<div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center font-bold text-xs text-indigo-300 border border-indigo-500/30"><i class="fas fa-star"></i></div>`;
+                    }
+
+                    return `
+                    <li class="${cardClass}">
+                        ${rankIcon}
+                        <div class="flex-1 min-w-0 z-10">
+                            <div class="flex justify-between mb-1">
+                                <span class="font-bold text-white text-sm truncate pr-2 flex items-center gap-2">${p.name} ${idx < 3 ? '<i class="fas fa-crown text-[10px] text-yellow-400 animate-pulse"></i>' : ''}</span>
+                                <span class="font-bold ${p.pct === 100 ? 'text-emerald-400' : 'text-brand-400'} text-sm">${Math.round(p.pct)}%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-dark-950 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full ${p.pct === 100 ? 'bg-emerald-500' : 'bg-brand-500'}" style="width: ${p.pct}%"></div>
+                            </div>
+                            <div class="text-[10px] text-slate-500 mt-1">${p.count} lojas atribuídas</div>
+                        </div>
+                    </li>
+                `}).join('');
+            },
+
+            renderPending() {
+                const tbody = document.getElementById('pending-table-body');
+                const pending = this.data.stores.filter(s => s.checks.some(c => !c.done));
+                
+                const badge = document.getElementById('badge-pending-sidebar');
+                if(pending.length > 0) badge.classList.remove('hidden');
+                else badge.classList.add('hidden');
+
+                if(pending.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-emerald-400 font-bold"><i class="fas fa-check-circle mr-2"></i> Tudo em dia!</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = pending.slice(0, 10).map(s => {
+                    const done = s.checks.filter(c => c.done).length;
+                    const total = s.checks.length;
+                    let team = s.promoter;
+                    if(s.promoter_support) team += ` <span class="text-slate-500 text-[10px]">+ ${s.promoter_support}</span>`;
+
+                    return `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="p-5 font-medium text-white">${s.name}</td>
+                        <td class="p-5 text-slate-400 text-xs">${team}</td>
+                        <td class="p-5"><span class="bg-amber-500/10 text-amber-500 px-2 py-1 rounded text-[10px] font-bold border border-amber-500/20">PENDENTE (${done}/${total})</span></td>
+                        <td class="p-5"><button onclick="app.editStore(${s.id})" class="text-brand-400 hover:text-white font-bold text-xs">Resolver <i class="fas fa-arrow-right ml-1"></i></button></td>
+                    </tr>
+                    `;
+                }).join('');
+            },
+
+            renderPromoters() {
+                const tbody = document.getElementById('promoters-table-body');
+                tbody.innerHTML = this.data.promoters.sort().map(p => {
+                    const pStores = this.data.stores.filter(s => s.promoter === p);
+                    const pSupport = this.data.stores.filter(s => s.promoter_support === p);
+                    
+                    let total = 0, done = 0;
+                    pStores.forEach(s => { total += s.checks.length; done += s.checks.filter(c => c.done).length; });
+                    const pct = total > 0 ? Math.round((done/total)*100) : 0;
+                    
+                    return `
+                    <tr class="hover:bg-white/5 transition-colors group cursor-pointer" onclick="app.showPromoterDetails('${p}')">
+                        <td class="p-5 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                                ${p.charAt(0)}
+                            </div>
+                            <div>
+                                <div class="font-medium text-slate-200 group-hover:text-white transition-colors">${p}</div>
+                                ${pSupport.length > 0 ? `<div class="text-[9px] text-slate-500">Apoio em ${pSupport.length} lojas</div>` : ''}
+                            </div>
+                        </td>
+                        <td class="p-5">
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 h-1.5 bg-dark-950 rounded-full overflow-hidden">
+                                    <div class="h-full ${pct === 100 ? 'bg-emerald-500' : 'bg-brand-500'}" style="width: ${pct}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-400">${pct}%</span>
+                            </div>
+                        </td>
+                        <td class="p-5 text-slate-400 text-xs font-mono">${pStores.length} PDVs</td>
+                        <td class="p-5 text-right">
+                            <button onclick="event.stopPropagation(); app.deletePromoter('${p}')" class="text-slate-600 hover:text-red-400 transition-colors"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+            },
+
+            showPromoterDetails(name) {
+                const pStores = this.data.stores.filter(s => s.promoter === name || s.promoter_support === name);
+                document.getElementById('detail-promoter-name').innerText = name;
+                document.getElementById('detail-promoter-stats').innerText = `${pStores.length} Lojas (Titular + Apoio)`;
+                
+                const list = document.getElementById('detail-promoter-list');
+                list.innerHTML = pStores.map(s => {
+                    const done = s.checks.filter(c => c.done).length;
+                    const total = s.checks.length;
+                    const pct = Math.round((done/total)*100);
+                    const isSupport = s.promoter_support === name;
+                    
+                    return `
+                    <tr>
+                        <td class="p-4 text-white text-sm font-medium">${s.name}</td>
+                        <td class="p-4">
+                            <span class="text-[10px] px-2 py-1 rounded border ${isSupport ? 'bg-purple-500/20 text-purple-300 border-purple-500/20' : 'bg-brand-500/20 text-brand-300 border-brand-500/20'}">
+                                ${isSupport ? 'APOIO' : 'TITULAR'}
+                            </span>
+                        </td>
+                        <td class="p-4"><span class="text-[10px] bg-slate-800 px-2 py-1 rounded border border-white/10">${s.freq}</span></td>
+                        <td class="p-4 text-right">
+                            <span class="font-bold ${pct === 100 ? 'text-emerald-400' : 'text-slate-400'} text-xs">${done}/${total}</span>
+                        </td>
+                        <td class="p-4 text-right">
+                            <button onclick="app.deleteStore(${s.id}, '${name}')" class="text-slate-500 hover:text-red-400 transition-colors p-2" title="Excluir Loja">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('modal-promoter-details').classList.remove('hidden');
+            },
+
+            deleteStore(id, currentPromoterName = null) {
+                const store = this.data.stores.find(s => s.id === id);
+                if(!store) return;
+
+                Swal.fire({
+                    title: 'Excluir Loja?',
+                    text: `Deseja remover o PDV "${store.name}" do sistema?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    background: '#0f172a', color: '#fff',
+                    confirmButtonText: 'Sim, excluir',
+                    cancelButtonText: 'Cancelar'
+                }).then(res => {
+                    if(res.isConfirmed) {
+                        this.data.stores = this.data.stores.filter(s => s.id !== id);
+                        this.save();
+                        this.updateUI();
+                        
+                        // Se estiver visualizando detalhes do promotor, atualiza a lista interna
+                        if(currentPromoterName) {
+                            const stillExists = this.data.promoters.includes(currentPromoterName);
+                            if(stillExists) {
+                                this.showPromoterDetails(currentPromoterName);
+                            } else {
+                                this.closeModal('modal-promoter-details');
+                            }
+                        }
+
+                        Swal.fire({
+                            toast: true, position: 'top-end', icon: 'success', 
+                            title: 'Loja excluída', showConfirmButton: false, timer: 2000,
+                            background: '#1e293b', color: '#fff'
+                        });
+                    }
+                });
+            },
+
+            openStoreModal() {
+                document.getElementById('edit-store-id').value = '';
+                document.getElementById('input-store-name').value = '';
+                document.getElementById('input-store-promoter').value = '';
+                document.getElementById('input-store-promoter-apoio').value = ''; 
+                document.getElementById('input-store-canal').value = 'NMR'; // Reset de canal
+                document.getElementById('input-store-freq').value = 'MENSAL';
+                document.getElementById('input-store-classification').value = 'PENDENTE';
+                document.getElementById('input-store-score').value = 0;
+                document.getElementById('input-store-score-range').value = 0;
+                
+                this.renderStoreOptions();
+                document.getElementById('modal-store').classList.remove('hidden');
+            },
+
+            editStore(id) {
+                const s = this.data.stores.find(x => x.id === id);
+                if(s) {
+                    document.getElementById('edit-store-id').value = s.id;
+                    document.getElementById('input-store-name').value = s.name;
+                    document.getElementById('input-store-promoter').value = s.promoter;
+                    document.getElementById('input-store-promoter-apoio').value = s.promoter_support || ''; 
+                    document.getElementById('input-store-canal').value = s.canal || 'NMR'; // Canal atual
+                    document.getElementById('input-store-freq').value = s.freq;
+                    document.getElementById('input-store-classification').value = s.classification || 'PENDENTE';
+                    document.getElementById('input-store-score').value = s.score || 0;
+                    document.getElementById('input-store-score-range').value = s.score || 0;
+                    document.getElementById('modal-store').classList.remove('hidden');
+                }
+            },
+
+            saveStore(e) {
+                e.preventDefault();
+                const id = document.getElementById('edit-store-id').value;
+                const name = document.getElementById('input-store-name').value.toUpperCase();
+                const promoter = document.getElementById('input-store-promoter').value;
+                const support = document.getElementById('input-store-promoter-apoio').value; 
+                const canal = document.getElementById('input-store-canal').value; // Novo campo
+                const freq = document.getElementById('input-store-freq').value;
+                const classification = document.getElementById('input-store-classification').value;
+                const score = parseInt(document.getElementById('input-store-score').value);
+
+                if(promoter && support && promoter === support) {
+                    Swal.fire('Erro', 'O promotor Titular e o de Apoio não podem ser a mesma pessoa.', 'error');
+                    return;
+                }
+
+                const freqMap = { 'MENSAL': 1, 'QUINZENAL': 2, 'SEMANAL': 4, 'EXTRA': 10 };
+                const newTotal = freqMap[freq];
+
+                if(id) {
+                    const s = this.data.stores.find(x => x.id == id);
+                    if(s) {
+                        s.name = name;
+                        s.promoter = promoter;
+                        s.promoter_support = support; 
+                        s.canal = canal; // Salvar canal
+                        s.classification = classification;
+                        s.score = score;
+                        if(s.freq !== freq) {
+                            s.freq = freq;
+                            s.checks = Array(newTotal).fill().map(() => ({done: false, date: null}));
+                        }
+                    }
+                } else {
+                    this.data.stores.push({
+                        id: Date.now(),
+                        name: name,
+                        promoter: promoter,
+                        promoter_support: support, 
+                        canal: canal, // Salvar canal
+                        freq: freq,
+                        classification: classification,
+                        score: score,
+                        checks: Array(newTotal).fill().map(() => ({done: false, date: null}))
+                    });
+                }
+
+                this.save();
+                this.closeModal('modal-store');
+                this.switchView('stores');
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success', 
+                    title: 'Salvo com sucesso', showConfirmButton: false, timer: 2000,
+                    background: '#1e293b', color: '#fff'
+                });
+            },
+
+            closeModal(id) {
+                document.getElementById(id).classList.add('hidden');
+            },
+
+            addPromoter() {
+                Swal.fire({
+                    title: 'Novo Promotor',
+                    input: 'text',
+                    inputPlaceholder: 'Nome Completo',
+                    background: '#0f172a', color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#6366f1'
+                }).then(res => {
+                    if(res.value) {
+                        this.data.promoters.push(res.value.toUpperCase());
+                        this.save();
+                        this.updateUI();
+                    }
+                });
+            },
+
+            deletePromoter(name) {
+                const hasStores = this.data.stores.some(s => s.promoter === name || s.promoter_support === name);
+                if(hasStores) {
+                    Swal.fire('Atenção', `O promotor ${name} está vinculado a lojas (como titular ou apoio).`, 'warning');
+                    return;
+                }
+                Swal.fire({
+                    title: 'Excluir?',
+                    text: name,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    background: '#0f172a', color: '#fff'
+                }).then(res => {
+                    if(res.isConfirmed) {
+                        this.data.promoters = this.data.promoters.filter(p => p !== name);
+                        this.save();
+                        this.updateUI();
+                    }
+                });
+            },
+
+            resetMonth() {
+                Swal.fire({
+                    title: 'Novo Ciclo',
+                    text: "Isso zerará TODAS as leituras do mês. Confirmar?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#6366f1',
+                    background: '#0f172a', color: '#fff'
+                }).then(res => {
+                    if(res.isConfirmed) {
+                        this.data.stores.forEach(s => {
+                            s.checks.forEach(c => { c.done = false; c.date = null; });
+                        });
+                        this.save();
+                        this.updateUI();
+                        Swal.fire('Pronto', 'Ciclo reiniciado com sucesso.', 'success');
+                    }
+                });
+            },
+
+            downloadBackup() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.data));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "backup_gestor_pro_" + new Date().toISOString().slice(0,10) + ".json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            },
+
+            uploadBackup(input) {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        if(json.stores && json.promoters) {
+                            this.data = json;
+                            this.save();
+                            this.updateUI();
+                            Swal.fire('Sucesso', 'Dados restaurados com sucesso!', 'success');
+                        } else {
+                            throw new Error("Formato inválido");
+                        }
+                    } catch(err) {
+                        Swal.fire('Erro', 'Arquivo de backup inválido.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+                input.value = ''; 
+            },
+
+            exportExcel() {
+                const data = this.data.stores.map(s => {
+                    const done = s.checks.filter(c => c.done).length;
+                    const total = s.checks.length;
+                    const dates = s.checks.filter(c => c.done && c.date).map(c => c.date).join(', ');
+                    
+                    let progress = 0;
+                    if (total > 0) {
+                        progress = Math.round((done / total) * 100);
+                    }
+
+                    return {
+                        "ID": s.id,
+                        "Loja": s.name,
+                        "Canal": s.canal || 'NMR',
+                        "Titular": s.promoter,
+                        "Apoio": s.promoter_support || '-',
+                        "Frequência": s.freq,
+                        "Classificação": s.classification,
+                        "Pontuação": s.score,
+                        "Realizado": done,
+                        "Meta": total,
+                        "Datas": dates,
+                        "Progresso": `${progress}%`
+                    };
+                });
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Relatorio_Geral");
+                XLSX.writeFile(wb, "Relatorio_Gestor_Pro_Avancado.xlsx");
+            },
+
+            playSuccessSound() {}
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
